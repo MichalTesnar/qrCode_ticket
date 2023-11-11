@@ -28,7 +28,7 @@ users = get_users_from_excel(OUTPUT_FILE_PATH)
 users_entrance = {}
 
 
-def has_permission(password: str):
+def has_permission(password):
     if password is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password required")
     if password != ADMIN_PASSWORD:
@@ -38,13 +38,13 @@ def has_permission(password: str):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
+async def root(request):
     return templates.TemplateResponse("index.html", {"request": request,
                                                      "page_title": PAGE_TITLE})
 
 
 @app.get("/ticket/{ticket_id}", response_class=HTMLResponse)
-async def ticket(request: Request, ticket_id: int):
+async def ticket(request, ticket_id):
     return templates.TemplateResponse("ticket.html", {"request": request,
                                                       "ticket_id": ticket_id,
                                                       "base_url": DOMAIN_NAME,
@@ -53,13 +53,13 @@ async def ticket(request: Request, ticket_id: int):
 
 
 @app.get("/api/ticket/all")
-async def read_all_items(password: Optional[str] = None):
+async def read_all_items(password=None):
     if has_permission(password):
         return users_entrance, users
 
 
 @app.get("/api/ticket/{ticket_id}")
-async def read_items(ticket_id: int):
+async def read_items(ticket_id):
     for user in users:
         if user['ticket_id'] == ticket_id:
             return user
@@ -67,14 +67,14 @@ async def read_items(ticket_id: int):
 
 
 @app.get("/reception", response_class=HTMLResponse)
-async def reception_page(request: Request):
+async def reception_page(request):
     return templates.TemplateResponse("reception.html", {"request": request,
                                                          "base_url": DOMAIN_NAME,
                                                          "page_title": PAGE_TITLE})
 
 
 @app.get("/api/reception/{ticket_id}")
-async def verify_ticket(ticket_id: int, password: Optional[str] = None):
+async def verify_ticket(ticket_id, password=None):
     if has_permission(password):
         for user in users:
             if user['ticket_id'] == ticket_id:
@@ -90,7 +90,7 @@ async def verify_ticket(ticket_id: int, password: Optional[str] = None):
                 }
 
 @app.get("/api/ivalidate/{ticket_id}")
-async def invalidate_ticket(ticket_id: int, password: Optional[str] = None):
+async def invalidate_ticket(ticket_id, password=None):
     if has_permission(password):
         for user in users:
             if user['ticket_id'] == ticket_id:
@@ -106,7 +106,7 @@ async def invalidate_ticket(ticket_id: int, password: Optional[str] = None):
                 }
 
 @app.get("/api/revalidate/{ticket_id}")
-async def revalidate_ticket(ticket_id: int, password: Optional[str] = None):
+async def revalidate_ticket(ticket_id, password=None):
     if has_permission(password):
         for user in users:
             if user['ticket_id'] == ticket_id:
@@ -123,4 +123,4 @@ async def revalidate_ticket(ticket_id: int, password: Optional[str] = None):
 
 
 def run_server():
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="https://qr-code-ticket.vercel.app/", port=8000)
