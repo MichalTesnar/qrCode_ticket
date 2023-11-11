@@ -1,68 +1,158 @@
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{ page_title }}</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }}</title>
 
-	<link rel="stylesheet" href="/static/css/bootstrap-reboot.rtl.min.css">
-	<link rel="stylesheet" href="/static/css/bootstrap-grid.rtl.min.css">
-	<link rel="stylesheet" href="/static/css/bootstrap-utilities.rtl.min.css">
-	<link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="/static/css/bootstrap-reboot.rtl.min.css" />
+    <link rel="stylesheet" href="/static/css/bootstrap-grid.rtl.min.css" />
+    <link rel="stylesheet" href="/static/css/bootstrap-utilities.rtl.min.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="main">
+      <!-- <input id="password" class="form-control w-100 mb-3" type="text" placeholder="this is scary"> -->
+      <input id="password" type="text" placeholder="Give me your password." />
+      <button class="btn mb-3" onclick="startQRScanner()">
+        Start scanner.
+      </button>
+      <div id="reader"></div>
+    </div>
 
-	<div class="main">
-		<input id="password" class="form-control w-100 mb-3" type="text" placeholder="رمز عبور ادمین">
-		<button class="btn mb-3" onclick="startQRScanner()">تایید و بازکردن qrScanner</button>
-		<div id="reader"></div>
-	</div>
-	
-	<script src="/static/js/jquery-3.6.0.min.js"></script>
-	<script src="/static/js/qrcode.min.js"></script>
-	<script src="/static/js/html5-qrcode.min.js"></script>
-	<script src="/static/js/script.js"></script>
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/qrcode.min.js"></script>
+    <script src="/static/js/html5-qrcode.min.js"></script>
+    <script src="/static/js/script.js"></script>
 
-	<script type="text/javascript">
+    <script type="text/javascript">
+      const BASE_URL = "{{ base_url }}";
 
-		const BASE_URL = "{{ base_url }}";
+      const getPassword = () => {
+        return $("#password").val();
+      };
 
-		const getPassword = () => {
-			return $("#password").val();
-		}
+      const reserveTicket = (ticket_id) => {
+        alert(`Failure${ticket_id}`);
+        $.get(
+          `${BASE_URL}/api/reception/${ticket_id}?password=${getPassword()}`
+        )
+          .then((res) => {
+            alert(
+              `This is a ticket for ${res.first_name} ${res.last_name} \n ID: ${ticket_id}  ${res.entrance_count}`
+            );
+            return res;
+          })
+          .fail((res) => {
+            alert("Failure");
+          });
+      };
 
-		const reserveTicket = ticket_id => {
-			$.get(`${BASE_URL}/api/reception/${ticket_id}?password=${getPassword()}`).then(res => {
-				alert(`میهمان ${res.first_name} ${res.last_name} با کد بلیت ${ticket_id} برای بار ${res.entrance_count} وارد شد. `);
-				return res;
-			}).fail(res => {
-				alert('بلیت نامعتبر است.');
-			})
-		}
+      const showButtons = (ticket_id) => {
+        // const buttonsContainer = $('#buttons-container');
+        // buttonsContainer.empty(); // Clear previous buttons
+        const buttonsContainer = $("<div>").attr("id", "buttons-container");
 
-		const getTicketIdFromURL = url => {
-			const parts = url.split("/");
-			return parts[parts.length-1]
-		}
-		const onScanSuccess = (decodedText, decodedResult) => {
-			const ticket_id = getTicketIdFromURL(decodedText)
+        // Create "Verify" button
+        const verifyButton = $("<button>")
+          .text("Verify")
+          .on("click", function () {
+            $.get(
+              `${BASE_URL}/api/reception/${ticket_id}?password=${getPassword()}`
+            )
+              .then((res) => {
+                const entered = res.entrance_count === 1;
+                alert(
+                  `This is a valid ticket! \n Name ${res.first_name} ${res.last_name} \n ID of the ticket: ${ticket_id} \n Entered? ${entered}`
+                );
+                return res;
+              })
+              .fail((res) => {
+                alert("Failure");
+              });
+          });
 
-			if (ticket_id) {
-				reserveTicket(ticket_id)
-			}
-		}
+        // Create "Invalidate" button
+        const invalidateButton = $("<button>")
+          .text("Invalidate")
+          .on("click", function () {
+            $.get(
+              `${BASE_URL}/api/ivalidate/${ticket_id}?password=${getPassword()}`
+            )
+              .then((res) => {
+                const entered = res.entrance_count === 1
+				alert(
+                  `Succesfully invalidated ticket!\n Name ${res.first_name} ${res.last_name} \n ID of the ticket: ${ticket_id} \n Entered? ${entered}`
+                );
+                return res;
+              })
+              .fail((res) => {
+                alert("Failure");
+              });
+          });
 
-		const startQRScanner = () => {
-			if (getPassword()) {
-				var html5QrcodeScanner = new Html5QrcodeScanner(
-						"reader", {fps: 10, qrbox: 250});
-				html5QrcodeScanner.render(onScanSuccess);
-			}
-			else {
-				alert('لطفا رمز عبور را وارد کنید');
-			}
-		}
+        // Create "Revalidate" button
+        const revalidateButton = $("<button>")
+          .text("Revalidate")
+          .on("click", function () {
+            $.get(
+              `${BASE_URL}/api/revalidate/${ticket_id}?password=${getPassword()}`
+            )
+              .then((res) => {
+				const entered = res.entrance_count === 1
+                alert(
+                  `Succesfully revalidated ticket!\n Name ${res.first_name} ${res.last_name} \n ID of the ticket: ${ticket_id} \n Entered? ${entered}`
+                );
+                return res;
+              })
+              .fail((res) => {
+                alert("Failure");
+              });
+          });
+        const exitButton = $("<button>")
+          .text("Exit")
+          .on("click", function () {
+            buttonsContainer.empty(); // Clear previous buttons
+          });
 
-	</script>
-</body>
+        // Append buttons to the container
+        buttonsContainer.append(
+          invalidateButton,
+          revalidateButton,
+          verifyButton,
+          exitButton
+        );
+        // Check if the container already exists, if not, append it to the body
+        if ($("#buttons-container").length === 0) {
+          $("body").append(buttonsContainer);
+        } else {
+          // If the container already exists, replace its contents
+          $("#buttons-container").replaceWith(buttonsContainer);
+        }
+      };
+
+      const getTicketIdFromURL = (url) => {
+        const parts = url.split("/");
+        return parts[parts.length - 1];
+      };
+      const onScanSuccess = (decodedText, decodedResult) => {
+        const ticket_id = getTicketIdFromURL(decodedText);
+        if (ticket_id) {
+          showButtons(ticket_id);
+        }
+      };
+
+      const startQRScanner = () => {
+        if (getPassword()) {
+          var html5QrcodeScanner = new Html5QrcodeScanner("reader", {
+            fps: 10,
+            qrbox: 250,
+          });
+          html5QrcodeScanner.render(onScanSuccess);
+        } else {
+          alert("Veri bet páswort!");
+        }
+      };
+    </script>
+  </body>
 </html>
