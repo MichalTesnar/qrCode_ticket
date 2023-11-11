@@ -78,10 +78,42 @@ async def verify_ticket(ticket_id: int, password: Optional[str] = None):
     if has_permission(password):
         for user in users:
             if user['ticket_id'] == ticket_id:
+                if ticket_id not in users_entrance:
+                    users_entrance[ticket_id] = 0
+                # else:
+                    # users_entrance[ticket_id] = 1
+
+                return {
+                    'first_name': user['first_name'],
+                    'last_name': user['last_name'],
+                    'entrance_count': users_entrance[ticket_id]
+                }
+
+@app.get("/api/ivalidate/{ticket_id}")
+async def invalidate_ticket(ticket_id: int, password: Optional[str] = None):
+    if has_permission(password):
+        for user in users:
+            if user['ticket_id'] == ticket_id:
                 if ticket_id in users_entrance:
-                    users_entrance[ticket_id] += 1
+                    users_entrance[ticket_id] = 1
                 else:
                     users_entrance[ticket_id] = 1
+
+                return {
+                    'first_name': user['first_name'],
+                    'last_name': user['last_name'],
+                    'entrance_count': users_entrance[ticket_id]
+                }
+
+@app.get("/api/revalidate/{ticket_id}")
+async def revalidate_ticket(ticket_id: int, password: Optional[str] = None):
+    if has_permission(password):
+        for user in users:
+            if user['ticket_id'] == ticket_id:
+                if ticket_id not in users_entrance:
+                    users_entrance[ticket_id] = 0
+                else:
+                    users_entrance[ticket_id] = 0
 
                 return {
                     'first_name': user['first_name'],

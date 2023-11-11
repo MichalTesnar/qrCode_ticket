@@ -29,6 +29,7 @@ def generate_ticket_link(input_file_path, output_file_path, base_url):
     """
     Create tickets link
     """
+    print(output_file_path)
     output_wb = openpyxl.load_workbook(output_file_path)
     output_ws = output_wb.active
     output_ws.cell(row=1, column=1).value = 'first_name'
